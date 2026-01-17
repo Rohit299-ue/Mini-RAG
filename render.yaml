@@ -1,0 +1,35 @@
+# Render Blueprint for RAG Backend
+# This file can be used to deploy the backend service on Render
+
+services:
+  - type: web
+    name: rag-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: LOG_LEVEL
+        value: info
+      - key: RATE_LIMIT_GENERAL
+        value: 100
+      - key: RATE_LIMIT_PROCESSING
+        value: 10
+      - key: CHUNK_MIN_SIZE
+        value: 800
+      - key: CHUNK_MAX_SIZE
+        value: 1200
+      - key: CHUNK_OVERLAP_PERCENTAGE
+        value: 0.125
+      # Sensitive environment variables should be set in Render dashboard
+      # - SUPABASE_URL
+      # - SUPABASE_ANON_KEY  
+      # - OPENAI_API_KEY
+      # - COHERE_API_KEY
+      # - CORS_ORIGIN
+      # - API_KEY

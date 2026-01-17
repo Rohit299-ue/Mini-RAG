@@ -1,9 +1,6 @@
-# Render Blueprint for RAG Backend
-# This file can be used to deploy the backend service on Render
-
 services:
   - type: web
-    name: rag-backend
+    name: mini-rag-backend
     env: node
     plan: starter
     buildCommand: npm install
@@ -26,10 +23,5 @@ services:
         value: 1200
       - key: CHUNK_OVERLAP_PERCENTAGE
         value: 0.125
-      # Sensitive environment variables should be set in Render dashboard
-      # - SUPABASE_URL
-      # - SUPABASE_ANON_KEY  
-      # - OPENAI_API_KEY
-      # - COHERE_API_KEY
-      # - CORS_ORIGIN
-      # - API_KEY
+      # Add your sensitive environment variables in Render dashboard:
+      # SUPABASE_URL, SUPABASE_ANON_KEY, OPENAI_API_KEY, COHERE_API_KEY, CORS_ORIGIN, API_KEY

@@ -3,12 +3,20 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-// Make OpenAI optional - only initialize if API key is provided
-export const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+// Make OpenAI completely optional
+export const isOpenAIEnabled = () => !!process.env.OPENAI_API_KEY
+
+// Only initialize OpenAI if API key is provided
+export const openai = isOpenAIEnabled() ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 }) : null
 
-export const isOpenAIEnabled = () => !!process.env.OPENAI_API_KEY
+// Log the status
+if (isOpenAIEnabled()) {
+  console.log('🤖 OpenAI configured')
+} else {
+  console.log('⚠️  OpenAI not configured - using alternative services')
+}
 
 // Configuration for embeddings
 export const EMBEDDING_CONFIG = {

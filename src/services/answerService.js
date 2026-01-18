@@ -1,6 +1,18 @@
-import { openai, isOpenAIEnabled } from '../config/openai.js'
 import { isCohereEnabled } from '../config/cohere.js'
 import CohereAnswerService from './cohereAnswerService.js'
+
+// Dynamically import OpenAI only if needed
+async function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) return null
+  
+  try {
+    const { openai } = await import('../config/openai.js')
+    return openai
+  } catch (error) {
+    console.log('⚠️  OpenAI not available:', error.message)
+    return null
+  }
+}
 
 /**
  * AnswerService - Generates final answers with inline citations using LLM
@@ -15,7 +27,7 @@ import CohereAnswerService from './cohereAnswerService.js'
 class AnswerService {
   constructor() {
     // Initialize the appropriate answer service
-    if (isOpenAIEnabled()) {
+    if (process.env.OPENAI_API_KEY) {
       this.provider = 'openai'
       this.model = 'gpt-4-turbo-preview'
       console.log('🤖 Using OpenAI for answer generation')

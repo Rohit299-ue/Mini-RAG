@@ -1,10 +1,23 @@
 import { openai, EMBEDDING_CONFIG, isOpenAIEnabled } from '../config/openai.js'
 import { createMockEmbedding } from './mockEmbeddingService.js'
+import HuggingFaceEmbeddingService from './huggingfaceEmbeddingService.js'
 
 class EmbeddingService {
   constructor() {
-    this.model = EMBEDDING_CONFIG.model
-    this.dimensions = EMBEDDING_CONFIG.dimensions
+    // Initialize the appropriate embedding service
+    if (isOpenAIEnabled()) {
+      this.provider = 'openai'
+      this.model = EMBEDDING_CONFIG.model
+      this.dimensions = EMBEDDING_CONFIG.dimensions
+      console.log('🤖 Using OpenAI embeddings')
+    } else {
+      this.provider = 'huggingface'
+      this.huggingface = new HuggingFaceEmbeddingService()
+      this.model = this.huggingface.model
+      this.dimensions = this.huggingface.dimensions
+      console.log('🤗 Using Hugging Face embeddings (free)')
+    }
+    
     this.batchSize = 100 // Process embeddings in batches
     this.retryAttempts = 3
     this.retryDelay = 1000 // 1 second
@@ -14,13 +27,12 @@ class EmbeddingService {
    * Generate embedding for a single text
    */
   async generateEmbedding(text) {
-    // Use mock embedding if OpenAI is not available
-    if (!isOpenAIEnabled()) {
-      console.log('⚠️  Using mock embedding for:', text.substring(0, 50) + '...')
-      const mockResponse = await createMockEmbedding(text)
-      return mockResponse.data[0].embedding
+    // Use Hugging Face if OpenAI is not available
+    if (this.provider === 'huggingface') {
+      return await this.huggingface.generateEmbedding(text)
     }
 
+    // Use OpenAI if available
     try {
       const response = await openai.embeddings.create({
         model: this.model,

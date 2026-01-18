@@ -1,4 +1,6 @@
-import { openai } from '../config/openai.js'
+import { openai, isOpenAIEnabled } from '../config/openai.js'
+import { isCohereEnabled } from '../config/cohere.js'
+import CohereAnswerService from './cohereAnswerService.js'
 
 /**
  * AnswerService - Generates final answers with inline citations using LLM
@@ -12,7 +14,21 @@ import { openai } from '../config/openai.js'
  */
 class AnswerService {
   constructor() {
-    this.model = 'gpt-4-turbo-preview' // Use latest GPT-4 for best reasoning
+    // Initialize the appropriate answer service
+    if (isOpenAIEnabled()) {
+      this.provider = 'openai'
+      this.model = 'gpt-4-turbo-preview'
+      console.log('🤖 Using OpenAI for answer generation')
+    } else if (isCohereEnabled()) {
+      this.provider = 'cohere'
+      this.cohereService = new CohereAnswerService()
+      this.model = 'command-r'
+      console.log('🔮 Using Cohere for answer generation')
+    } else {
+      this.provider = 'none'
+      console.log('⚠️  No LLM service available - answer generation disabled')
+    }
+    
     this.maxTokens = 1000 // Reasonable length for answers
     this.temperature = 0.1 // Low temperature for factual accuracy
     this.retryAttempts = 3

@@ -45,8 +45,20 @@ export async function testAllConnections() {
       results.cohere = false
     }
 
-    // Determine overall health
-    results.allHealthy = results.database && results.openai
+    // Determine overall health - only require database for basic functionality
+    results.allHealthy = results.database
+    
+    // Log service status
+    console.log('\n📊 Connection Test Results:')
+    console.log(`   Database: ${results.database ? '✅ Connected' : '❌ Failed'}`)
+    console.log(`   OpenAI: ${results.openai ? '✅ Connected' : '⚠️  Disabled (embedding features unavailable)'}`)
+    console.log(`   Cohere: ${results.cohere ? '✅ Connected' : '⚠️  Disabled (reranking features unavailable)'}`)
+    
+    if (results.allHealthy) {
+      console.log('✅ System ready for basic operation')
+    } else {
+      console.log('❌ Critical services unavailable - system cannot start')
+    }
     
     // Log results
     console.log('📊 Connection Test Results:')

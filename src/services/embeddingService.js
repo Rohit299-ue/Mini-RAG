@@ -1,4 +1,5 @@
-import { openai, EMBEDDING_CONFIG } from '../config/openai.js'
+import { openai, EMBEDDING_CONFIG, isOpenAIEnabled } from '../config/openai.js'
+import { createMockEmbedding } from './mockEmbeddingService.js'
 
 class EmbeddingService {
   constructor() {
@@ -13,6 +14,13 @@ class EmbeddingService {
    * Generate embedding for a single text
    */
   async generateEmbedding(text) {
+    // Use mock embedding if OpenAI is not available
+    if (!isOpenAIEnabled()) {
+      console.log('⚠️  Using mock embedding for:', text.substring(0, 50) + '...')
+      const mockResponse = await createMockEmbedding(text)
+      return mockResponse.data[0].embedding
+    }
+
     try {
       const response = await openai.embeddings.create({
         model: this.model,

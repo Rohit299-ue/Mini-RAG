@@ -3,13 +3,12 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing OpenAI API key. Please set OPENAI_API_KEY environment variable.')
-}
-
-export const openai = new OpenAI({
+// Make OpenAI optional - only initialize if API key is provided
+export const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
+
+export const isOpenAIEnabled = () => !!process.env.OPENAI_API_KEY
 
 // Configuration for embeddings
 export const EMBEDDING_CONFIG = {
@@ -20,6 +19,11 @@ export const EMBEDDING_CONFIG = {
 
 // Test OpenAI connection
 export const testOpenAIConnection = async () => {
+  if (!openai) {
+    console.log('⚠️  OpenAI not configured - embedding features disabled')
+    return false
+  }
+  
   try {
     const response = await openai.embeddings.create({
       model: EMBEDDING_CONFIG.model,

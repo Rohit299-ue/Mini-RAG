@@ -3,13 +3,12 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-if (!process.env.COHERE_API_KEY) {
-  throw new Error('Missing Cohere API key. Please set COHERE_API_KEY environment variable.')
-}
-
-export const cohere = new CohereClientV2({
+// Make Cohere optional - only initialize if API key is provided
+export const cohere = process.env.COHERE_API_KEY ? new CohereClientV2({
   token: process.env.COHERE_API_KEY,
-})
+}) : null
+
+export const isCohereEnabled = () => !!process.env.COHERE_API_KEY
 
 // Configuration for reranking
 export const RERANK_CONFIG = {
@@ -21,6 +20,11 @@ export const RERANK_CONFIG = {
 
 // Test Cohere connection
 export const testCohereConnection = async () => {
+  if (!cohere) {
+    console.log('⚠️  Cohere not configured - reranking features disabled')
+    return false
+  }
+  
   try {
     // Test with a simple rerank request
     const response = await cohere.v2.rerank({

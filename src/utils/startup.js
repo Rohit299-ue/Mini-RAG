@@ -86,11 +86,11 @@ export async function testAllConnections() {
 export function validateEnvironment() {
   const required = [
     'SUPABASE_URL',
-    'SUPABASE_ANON_KEY', 
-    'OPENAI_API_KEY'
+    'SUPABASE_ANON_KEY'
   ]
   
   const optional = [
+    'OPENAI_API_KEY',
     'COHERE_API_KEY',
     'PORT',
     'NODE_ENV',
@@ -163,28 +163,47 @@ export async function gracefulStartup() {
     const connectionResults = await testAllConnections()
     
     // Step 3: Determine startup mode
-    let startupMode = 'full'
+    let startupMode = 'basic'
     const warnings = []
+    const features = []
     
+    // Database is required
     if (!connectionResults.database) {
       throw new Error('Database connection failed - cannot start server')
     }
     
-    if (!connectionResults.openai) {
-      throw new Error('OpenAI connection failed - cannot start server')
+    // OpenAI is optional
+    if (connectionResults.openai) {
+      startupMode = 'full'
+      features.push('OpenAI embeddings and answers')
+    } else {
+      warnings.push('OpenAI unavailable - using alternative services')
     }
     
-    if (!connectionResults.cohere) {
-      startupMode = 'limited'
+    // Cohere is optional
+    if (connectionResults.cohere) {
+      features.push('Cohere reranking and answers')
+    } else {
       warnings.push('Cohere unavailable - reranking features disabled')
+    }
+
+    // Check if we have at least one AI service
+    if (!connectionResults.openai && !connectionResults.cohere) {
+      warnings.push('No AI services available - using Hugging Face embeddings only')
+      startupMode = 'limited'
     }
 
     // Step 4: Log startup summary
     console.log('📋 Startup Summary:')
     console.log(`  Mode: ${startupMode}`)
-    console.log(`  Database: Connected`)
-    console.log(`  OpenAI: Connected`)
-    console.log(`  Cohere: ${connectionResults.cohere ? 'Connected' : 'Unavailable'}`)
+    console.log(`  Database: ✅ Connected`)
+    console.log(`  OpenAI: ${connectionResults.openai ? '✅ Connected' : '⚠️  Unavailable'}`)
+    console.log(`  Cohere: ${connectionResults.cohere ? '✅ Connected' : '⚠️  Unavailable'}`)
+    
+    if (features.length > 0) {
+      console.log('🎯 Available features:')
+      features.forEach(feature => console.log(`    - ${feature}`))
+    }
     
     if (warnings.length > 0) {
       console.log('⚠️  Warnings:')
@@ -195,7 +214,8 @@ export async function gracefulStartup() {
       success: true,
       mode: startupMode,
       services: connectionResults,
-      warnings
+      warnings,
+      features
     }
     
   } catch (error) {

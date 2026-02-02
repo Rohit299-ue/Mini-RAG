@@ -1,5 +1,4 @@
 import { openai, EMBEDDING_CONFIG, isOpenAIEnabled } from '../config/openai.js'
-import { createMockEmbedding } from './mockEmbeddingService.js'
 import HuggingFaceEmbeddingService from './huggingfaceEmbeddingService.js'
 
 class EmbeddingService {

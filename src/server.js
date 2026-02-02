@@ -57,15 +57,12 @@ app.get('/health', async (req, res) => {
   try {
     // Import here to avoid circular dependencies
     const { testConnection } = await import('./config/database.js')
-    const { testOpenAIConnection } = await import('./config/openai.js')
     const { testCohereConnection } = await import('./config/cohere.js')
     
     const dbStatus = await testConnection()
-    const openaiStatus = await testOpenAIConnection()
     const cohereStatus = await testCohereConnection()
     
-    const criticalServices = dbStatus && openaiStatus
-    const status = criticalServices ? 'healthy' : 'unhealthy'
+    const status = dbStatus ? 'healthy' : 'unhealthy'
     const statusCode = status === 'healthy' ? 200 : 503
     
     res.status(statusCode).json({
@@ -73,7 +70,7 @@ app.get('/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       services: {
         database: dbStatus ? 'connected' : 'disconnected',
-        openai: openaiStatus ? 'connected' : 'disconnected',
+        embeddings: 'huggingface',
         cohere: cohereStatus ? 'connected' : 'disconnected'
       },
       version: process.env.npm_package_version || '1.0.0'

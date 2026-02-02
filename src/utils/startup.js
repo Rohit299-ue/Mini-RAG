@@ -4,7 +4,6 @@
  */
 
 import { testConnection } from '../config/database.js'
-import { testOpenAIConnection } from '../config/openai.js'
 import { testCohereConnection } from '../config/cohere.js'
 
 /**
@@ -13,7 +12,6 @@ import { testCohereConnection } from '../config/cohere.js'
 export async function testAllConnections() {
   const results = {
     database: false,
-    openai: false,
     cohere: false,
     allHealthy: false
   }
@@ -29,19 +27,11 @@ export async function testAllConnections() {
       results.database = false
     }
 
-    // Test OpenAI connection
-    try {
-      results.openai = await testOpenAIConnection()
-    } catch (error) {
-      console.error('OpenAI connection test failed:', error.message)
-      results.openai = false
-    }
-
     // Test Cohere connection (optional service)
     try {
       results.cohere = await testCohereConnection()
     } catch (error) {
-      console.warn('Cohere connection test failed (reranking will be unavailable):', error.message)
+      console.warn('Cohere connection test failed:', error.message)
       results.cohere = false
     }
 
@@ -51,25 +41,12 @@ export async function testAllConnections() {
     // Log service status
     console.log('\n📊 Connection Test Results:')
     console.log(`   Database: ${results.database ? '✅ Connected' : '❌ Failed'}`)
-    console.log(`   OpenAI: ${results.openai ? '✅ Connected' : '⚠️  Disabled (embedding features unavailable)'}`)
     console.log(`   Cohere: ${results.cohere ? '✅ Connected' : '⚠️  Disabled (reranking features unavailable)'}`)
     
     if (results.allHealthy) {
-      console.log('✅ System ready for basic operation')
+      console.log('✅ System ready for operation')
     } else {
       console.log('❌ Critical services unavailable - system cannot start')
-    }
-    
-    // Log results
-    console.log('📊 Connection Test Results:')
-    console.log(`  Database: ${results.database ? '✅' : '❌'}`)
-    console.log(`  OpenAI: ${results.openai ? '✅' : '❌'}`)
-    console.log(`  Cohere: ${results.cohere ? '✅' : '⚠️ '} ${!results.cohere ? '(optional)' : ''}`)
-    
-    if (results.allHealthy) {
-      console.log('🎉 All critical services are healthy!')
-    } else {
-      console.warn('⚠️  Some critical services are unavailable')
     }
 
     return results
@@ -172,32 +149,20 @@ export async function gracefulStartup() {
       throw new Error('Database connection failed - cannot start server')
     }
     
-    // OpenAI is optional
-    if (connectionResults.openai) {
-      startupMode = 'full'
-      features.push('OpenAI embeddings and answers')
-    } else {
-      warnings.push('OpenAI unavailable - using alternative services')
-    }
+    features.push('Hugging Face embeddings (free)')
     
     // Cohere is optional
     if (connectionResults.cohere) {
       features.push('Cohere reranking and answers')
+      startupMode = 'full'
     } else {
-      warnings.push('Cohere unavailable - reranking features disabled')
-    }
-
-    // Check if we have at least one AI service
-    if (!connectionResults.openai && !connectionResults.cohere) {
-      warnings.push('No AI services available - using Hugging Face embeddings only')
-      startupMode = 'limited'
+      warnings.push('Cohere unavailable - reranking and answer generation disabled')
     }
 
     // Step 4: Log startup summary
     console.log('📋 Startup Summary:')
     console.log(`  Mode: ${startupMode}`)
     console.log(`  Database: ✅ Connected`)
-    console.log(`  OpenAI: ${connectionResults.openai ? '✅ Connected' : '⚠️  Unavailable'}`)
     console.log(`  Cohere: ${connectionResults.cohere ? '✅ Connected' : '⚠️  Unavailable'}`)
     
     if (features.length > 0) {

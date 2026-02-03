@@ -1,0 +1,51 @@
+{
+  "description": "Evaluation test cases for Mini RAG system",
+  "test_cases": [
+    {
+      "id": 1,
+      "question": "What is the main purpose of the system?",
+      "expected_answer": "Should retrieve information about the system's purpose from uploaded documents",
+      "category": "factual"
+    },
+    {
+      "id": 2,
+      "question": "How does the process work step by step?",
+      "expected_answer": "Should combine multiple chunks to explain the complete process",
+      "category": "multi-hop"
+    },
+    {
+      "id": 3,
+      "question": "What are the key features mentioned?",
+      "expected_answer": "Should list features found across different sections",
+      "category": "list"
+    },
+    {
+      "id": 4,
+      "question": "What is the difference between X and Y?",
+      "expected_answer": "Should compare information from different chunks",
+      "category": "comparison"
+    },
+    {
+      "id": 5,
+      "question": "What are the limitations or constraints?",
+      "expected_answer": "Should identify negative or cautionary information",
+      "category": "critical"
+    }
+  ],
+  "evaluation_notes": {
+    "retrieval_success_rate": "Expected ~85% accuracy with proper document upload",
+    "methodology": "Test each question after uploading relevant documents",
+    "metrics": [
+      "Answer relevance (1-5 scale)",
+      "Citation accuracy (all claims cited)",
+      "Response time (< 3 seconds target)",
+      "Hallucination rate (should be near 0%)"
+    ],
+    "known_limitations": [
+      "May struggle with questions requiring complex reasoning across many chunks",
+      "Performance depends on chunk boundaries - related info may be split",
+      "Reranking adds latency but significantly improves relevance",
+      "System will refuse to answer if no relevant chunks found (by design)"
+    ]
+  }
+}

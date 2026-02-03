@@ -1,0 +1,39 @@
+.question-panel h2 {
+  color: #333;
+  margin-bottom: 25px;
+  font-size: 1.5rem;
+}
+
+.tips {
+  margin-top: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.tips p {
+  margin-bottom: 10px;
+  color: #555;
+  font-weight: 600;
+}
+
+.tips ul {
+  margin-left: 20px;
+  color: #666;
+}
+
+.tips li {
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}

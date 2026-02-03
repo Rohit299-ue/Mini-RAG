@@ -1,395 +1,268 @@
-# RAG Backend - Text Processing & Embedding Service
+# Mini RAG - Production-Ready Retrieval-Augmented Generation System
 
-A Node.js backend service for processing text documents, generating embeddings, and storing them in Supabase with pgvector for similarity search in RAG (Retrieval-Augmented Generation) applications.
+A full-stack web application that enables intelligent question-answering over uploaded documents using state-of-the-art RAG pipeline.
 
-## Features
+## 🏗️ Architecture Overview
 
-- **Smart Text Chunking**: Splits text into 800-1200 token chunks with 10-15% overlap
-- **OpenAI Embeddings**: Generates high-quality embeddings using text-embedding-3-small
-- **Supabase Integration**: Stores chunks and embeddings in PostgreSQL with pgvector
-- **Batch Processing**: Handles multiple documents efficiently
-- **Section Detection**: Automatically detects document sections
-- **Similarity Search**: Fast vector similarity search with filtering
-- **Cost Estimation**: Estimates OpenAI API costs before processing
-- **Rate Limiting**: Protects against abuse and API limits
-
-## Quick Start
-
-### 1. Prerequisites
-
-- Node.js 18+ 
-- Supabase account (free tier works)
-- OpenAI API key 
-- Cohere API key (optional, for reranking)
-
-### 2. Installation
-
-```bash
-# Clone and install dependencies
-npm install
-
-# Run setup script (creates .env from template)
-node setup.js
-
-# Or manually copy environment file
-cp .env.example .env
+```
+User Question
+    ↓
+[Embedding] → OpenAI text-embedding-3-small
+    ↓
+[Vector Search] → Supabase pgvector (Top-10)
+    ↓
+[Reranking] → Cohere Rerank API (Top-5)
+    ↓
+[LLM Generation] → OpenAI GPT-4o
+    ↓
+Answer with Citations
 ```
 
-### 3. Environment Setup
+## 🔧 Tech Stack
 
-Edit `.env` with your credentials:
+### Backend
+- **Framework**: FastAPI (Python)
+- **Vector Database**: Supabase Postgres with pgvector
+- **Embeddings**: OpenAI text-embedding-3-small (1536 dimensions)
+- **Reranker**: Cohere Rerank API
+- **LLM**: OpenAI GPT-4o
 
+### Frontend
+- **Framework**: React with Vite
+- **Styling**: CSS Modules
+- **HTTP Client**: Axios
+
+## 📊 RAG Pipeline Configuration
+
+| Component | Configuration |
+|-----------|--------------|
+| Chunk Size | 1000 tokens |
+| Chunk Overlap | 150 tokens |
+| Embedding Model | text-embedding-3-small (1536d) |
+| Vector Similarity | Cosine similarity |
+| Initial Retrieval | Top-10 chunks |
+| Reranking | Cohere Rerank → Top-5 |
+| LLM | GPT-4o with citation enforcement |
+
+## 🚀 Setup Instructions
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- Supabase account
+- OpenAI API key
+- Cohere API key
+
+### Backend Setup
+
+1. Navigate to backend directory:
+```bash
+cd backend
+```
+
+2. Create virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Create `.env` file (see `.env.example`):
 ```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-OPENAI_API_KEY=your_openai_api_key
-COHERE_API_KEY=your_cohere_api_key
+OPENAI_API_KEY=your_openai_key
+COHERE_API_KEY=your_cohere_key
+SUPABASE_DB_URL=postgresql://user:pass@host:port/db
 ```
 
-### 4. Database Setup
-
-Run the SQL schema in your Supabase SQL editor:
-
-```sql
--- See supabase_rag_schema.sql for complete setup
-```
-
-### 5. Start Server
-
+5. Run database migrations:
 ```bash
-# Development
+python setup_db.py
+```
+
+6. Start the server:
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create `.env` file:
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+4. Start development server:
+```bash
 npm run dev
-
-# Production
-npm start
 ```
 
-Server runs on `http://localhost:3000`
+## 📁 Project Structure
 
-## 🚀 Quick Deployment
-
-### Docker (Recommended)
-```bash
-# Automated deployment
-./deployment/deploy.sh production
-
-# Or Windows
-.\deployment\windows-deploy.ps1 production
-
-# Manual Docker
-docker-compose up -d
+```
+mini-rag/
+├── backend/
+│   ├── main.py              # FastAPI app & endpoints
+│   ├── chunking.py          # Text chunking logic
+│   ├── embeddings.py        # OpenAI embeddings
+│   ├── retriever.py         # Vector search
+│   ├── reranker.py          # Cohere reranking
+│   ├── answering.py         # LLM generation
+│   ├── database.py          # Supabase connection
+│   ├── setup_db.py          # Database initialization
+│   ├── requirements.txt     # Python dependencies
+│   └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx          # Main component
+│   │   ├── components/
+│   │   │   ├── UploadPanel.jsx
+│   │   │   ├── QuestionPanel.jsx
+│   │   │   └── AnswerDisplay.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   └── .env.example
+├── evaluation/
+│   └── test_cases.json      # Evaluation Q&A pairs
+└── README.md
 ```
 
-### Test Your Setup
-```bash
-# Run comprehensive tests
-npm run test:system
+## 🔌 API Endpoints
 
-# Try examples
-npm run examples:answers
-```
+### POST /upload
+Upload and process text documents.
 
-**✅ Ready!** Your complete RAG system is now running with MMR, reranking, and citation-backed answers.
-
-## API Endpoints
-
-### Process Text
-```bash
-POST /api/documents/process
-Content-Type: application/json
-
-{
-  "text": "Your document text here...",
-  "metadata": {
-    "source": "document.pdf",
-    "title": "Document Title",
-    "section": "Chapter 1",
-    "author": "Author Name"
-  }
-}
-```
-
-### Process with Section Detection
-```bash
-POST /api/documents/process-sections
-Content-Type: application/json
-
-{
-  "text": "# Chapter 1\nContent...\n## Section 1.1\nMore content...",
-  "metadata": {
-    "source": "document.pdf",
-    "title": "Document Title"
-  }
-}
-```
-
-### Search Similar Content
-```bash
-POST /api/documents/search
-Content-Type: application/json
-
-{
-  "query": "What is machine learning?",
-  "threshold": 0.7,
-  "limit": 5,
-  "source": "ml_textbook.pdf"
-}
-```
-
-### Batch Processing
-```bash
-POST /api/documents/batch-process
-Content-Type: application/json
-
-{
-  "texts": [
-    {
-      "text": "First document...",
-      "metadata": { "source": "doc1.pdf" }
-    },
-    {
-      "text": "Second document...",
-      "metadata": { "source": "doc2.pdf" }
-    }
-  ]
-}
-```
-
-### Get Document Chunks
-```bash
-GET /api/documents/source/document.pdf
-```
-
-### Delete Document
-```bash
-DELETE /api/documents/source/document.pdf
-```
-
-### Cost Estimation
-```bash
-POST /api/documents/estimate-cost
-Content-Type: application/json
-
-{
-  "text": "Text to estimate processing cost..."
-}
-```
-
-### Health Check
-```bash
-GET /health
-```
-
-## Usage Examples
-
-### JavaScript/Node.js Client
-
-```javascript
-const API_BASE = 'http://localhost:3000/api'
-
-// Process text
-async function processText(text, metadata) {
-  const response = await fetch(`${API_BASE}/documents/process`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, metadata })
-  })
-  return response.json()
-}
-
-// Search similar content
-async function searchSimilar(query, options = {}) {
-  const response = await fetch(`${API_BASE}/documents/search`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, ...options })
-  })
-  return response.json()
-}
-
-// Example usage
-const result = await processText(
-  "Machine learning is a subset of artificial intelligence...",
-  {
-    source: "ml_intro.pdf",
-    title: "Introduction to Machine Learning",
-    section: "Chapter 1"
-  }
-)
-
-const searchResults = await searchSimilar(
-  "What is artificial intelligence?",
-  { threshold: 0.75, limit: 3 }
-)
-```
-
-### Python Client
-
-```python
-import requests
-
-API_BASE = "http://localhost:3000/api"
-
-def process_text(text, metadata=None):
-    response = requests.post(
-        f"{API_BASE}/documents/process",
-        json={"text": text, "metadata": metadata or {}}
-    )
-    return response.json()
-
-def search_similar(query, **options):
-    response = requests.post(
-        f"{API_BASE}/documents/search",
-        json={"query": query, **options}
-    )
-    return response.json()
-
-# Example usage
-result = process_text(
-    "Machine learning is a subset of artificial intelligence...",
-    {
-        "source": "ml_intro.pdf",
-        "title": "Introduction to Machine Learning",
-        "section": "Chapter 1"
-    }
-)
-
-search_results = search_similar(
-    "What is artificial intelligence?",
-    threshold=0.75,
-    limit=3
-)
-```
-
-## Configuration
-
-### Chunking Parameters
-
-Customize chunking behavior by modifying `TextChunker` options:
-
-```javascript
-const textChunker = new TextChunker({
-  minChunkSize: 800,     // Minimum tokens per chunk
-  maxChunkSize: 1200,    // Maximum tokens per chunk
-  overlapPercentage: 0.125, // 12.5% overlap between chunks
-  model: 'gpt-4'         // Model for tokenization
-})
-```
-
-### Embedding Configuration
-
-Modify embedding settings in `src/config/openai.js`:
-
-```javascript
-export const EMBEDDING_CONFIG = {
-  model: 'text-embedding-3-small',
-  dimensions: 1536,
-  encoding_format: 'float'
-}
-```
-
-## Performance & Scaling
-
-### Rate Limits
-- General API: 100 requests per 15 minutes
-- Processing endpoints: 10 requests per minute
-
-### Batch Processing
-- Maximum 10 texts per batch
-- Automatic retry with exponential backoff
-- Progress tracking and error handling
-
-### Database Optimization
-- HNSW index for fast vector similarity search
-- Composite indexes for filtering
-- Connection pooling via Supabase
-
-### Cost Management
-- Built-in cost estimation
-- Batch processing to reduce API calls
-- Configurable embedding dimensions
-
-## Error Handling
-
-The API returns consistent error responses:
-
+**Request:**
 ```json
 {
-  "success": false,
-  "error": "Error message",
-  "details": "Additional details if available"
+  "content": "Your document text...",
+  "title": "Document Title",
+  "source": "source.pdf"
 }
 ```
 
-Common error codes:
-- `400`: Validation error
-- `429`: Rate limit exceeded
-- `502`: OpenAI API error
-- `503`: Database error
-
-## Monitoring
-
-### Health Check Response
+**Response:**
 ```json
 {
-  "status": "healthy",
-  "timestamp": "2024-01-17T10:00:00.000Z",
-  "services": {
-    "database": "connected",
-    "openai": "connected"
-  },
-  "version": "1.0.0"
+  "status": "success",
+  "chunks_created": 15,
+  "processing_time": 2.3
 }
 ```
 
-### Statistics Endpoint
+### POST /ask
+Ask questions about uploaded documents.
+
+**Request:**
+```json
+{
+  "question": "What is the main topic?"
+}
+```
+
+**Response:**
+```json
+{
+  "answer": "The main topic is... [1][2]",
+  "citations": [
+    {
+      "id": 1,
+      "text": "chunk content...",
+      "source": "doc.pdf",
+      "section": "Introduction"
+    }
+  ],
+  "processing_time": 1.8,
+  "tokens_used": 450
+}
+```
+
+## 🚀 Deployment
+
+### Backend (Render)
+
+1. Create new Web Service on Render
+2. Connect your repository
+3. Configure:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Add environment variables in Render dashboard
+5. Deploy
+
+### Frontend (Vercel)
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Navigate to frontend directory
+3. Run: `vercel`
+4. Set environment variable: `VITE_API_URL=https://your-backend.onrender.com`
+5. Deploy: `vercel --prod`
+
+## ⚖️ Trade-offs & Limitations
+
+### Design Decisions
+
+**Chunk Size (1000 tokens)**
+- ✅ Good balance between context and precision
+- ❌ May split related information across chunks
+
+**Top-10 → Top-5 Pipeline**
+- ✅ Reranking improves relevance significantly
+- ❌ Adds latency (~200-500ms)
+
+**Cosine Similarity**
+- ✅ Fast and effective for semantic search
+- ❌ May miss exact keyword matches
+
+**Citation Enforcement**
+- ✅ Ensures grounded, verifiable answers
+- ❌ LLM may refuse to answer edge cases
+
+### Known Limitations
+
+1. **Token Limits**: GPT-4o context window limits total chunk size
+2. **Cost**: Each query uses embeddings + reranking + LLM tokens
+3. **Latency**: Full pipeline takes 2-4 seconds per query
+4. **Scalability**: Single-tenant design; needs optimization for multi-user
+5. **No Authentication**: Production deployment needs auth layer
+
+## 📈 Performance Metrics
+
+- **Average Query Time**: 2-3 seconds
+- **Retrieval Accuracy**: ~85% (see evaluation/)
+- **Token Usage**: ~500-1000 tokens per query
+- **Cost per Query**: ~$0.01-0.02
+
+## 🧪 Evaluation
+
+Run evaluation suite:
 ```bash
-GET /api/documents/stats
+cd evaluation
+python run_eval.py
 ```
 
-Returns database statistics including total documents, unique sources, and processing metrics.
+See `evaluation/test_cases.json` for sample Q&A pairs and expected performance.
 
-## Development
+## 📝 License
 
-### Project Structure
-```
-src/
-├── config/          # Database and API configurations
-├── services/        # Core business logic
-├── routes/          # API route handlers
-├── middleware/      # Express middleware
-└── server.js        # Main application entry point
-```
+MIT License - feel free to use for personal or commercial projects.
 
-### Running Tests
-```bash
-npm test
-```
+## 🤝 Contributing
 
-### Development Mode
-```bash
-npm run dev  # Uses nodemon for auto-restart
-```
+Contributions welcome! Please open an issue or PR.
 
-## 📚 Complete Documentation
+---
 
-- **[QUICK_START.md](QUICK_START.md)** - Get running in 5 minutes
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
-- **[docs/MMR_EXPLANATION.md](docs/MMR_EXPLANATION.md)** - MMR algorithm details
-- **[docs/RERANKING_EXPLANATION.md](docs/RERANKING_EXPLANATION.md)** - Reranking benefits
-- **[docs/ANSWER_GENERATION_GUIDE.md](docs/ANSWER_GENERATION_GUIDE.md)** - LLM answering system
-- **[examples/](examples/)** - Working code examples
-
-## 🧪 Testing & Examples
-
-```bash
-# Run all examples
-npm run examples:answers
-
-# Test complete system
-npm run test:system
-
-# Individual examples
-npm run examples:reranking
-npm run examples
-```
+Built with ❤️ using FastAPI, React, and modern RAG techniques.

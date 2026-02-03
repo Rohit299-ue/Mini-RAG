@@ -1,204 +1,311 @@
-# 🚀 RAG System Deployment Guide
+# Deployment Guide
 
-This guide covers deploying your RAG system to production using Render (backend) and Netlify (frontend).
+Complete guide for deploying Mini RAG to production.
 
-## 📋 Quick Start
+## Prerequisites
 
-1. **Follow the checklist**: See [`DEPLOYMENT_CHECKLIST.md`](./DEPLOYMENT_CHECKLIST.md) for detailed steps
-2. **Setup environment**: Run `node scripts/setup-production-env.js`
-3. **Deploy services**: Follow the cloud deployment guide in [`CLOUD_DEPLOYMENT.md`](./CLOUD_DEPLOYMENT.md)
-4. **Verify deployment**: Run `npm run verify:deployment`
+- Supabase account (free tier works)
+- OpenAI API key
+- Cohere API key
+- Render account (for backend)
+- Vercel account (for frontend)
 
-## 🛠️ Available Scripts
+## Step 1: Database Setup (Supabase)
 
-### Setup & Configuration
+### 1.1 Create Supabase Project
+
+1. Go to [supabase.com](https://supabase.com)
+2. Create new project
+3. Wait for database to initialize
+
+### 1.2 Enable pgvector
+
+1. Go to SQL Editor in Supabase dashboard
+2. Run the SQL from `backend/schema.sql`
+3. Verify extension: `SELECT * FROM pg_extension WHERE extname = 'vector';`
+
+### 1.3 Get Connection String
+
+1. Go to Project Settings → Database
+2. Copy the connection string (URI format)
+3. Format: `postgresql://postgres:[password]@[host]:5432/postgres`
+
+## Step 2: Backend Deployment (Render)
+
+### 2.1 Prepare Repository
+
 ```bash
-# Interactive production environment setup
-node scripts/setup-production-env.js
-
-# Test system locally before deployment
-npm run test:system
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin <your-repo-url>
+git push -u origin main
 ```
 
-### Deployment
+### 2.2 Deploy to Render
+
+1. Go to [render.com](https://render.com)
+2. Click "New +" → "Web Service"
+3. Connect your GitHub repository
+4. Configure:
+   - **Name**: mini-rag-backend
+   - **Region**: Choose closest to you
+   - **Branch**: main
+   - **Root Directory**: backend
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+### 2.3 Set Environment Variables
+
+In Render dashboard, add:
+
+```
+OPENAI_API_KEY=sk-...
+COHERE_API_KEY=...
+SUPABASE_DB_URL=postgresql://...
+```
+
+### 2.4 Deploy
+
+1. Click "Create Web Service"
+2. Wait for deployment (3-5 minutes)
+3. Note your backend URL: `https://mini-rag-backend.onrender.com`
+
+### 2.5 Initialize Database
+
+After first deployment:
+
 ```bash
-# Deploy to production (Linux/Mac)
-npm run deploy
-
-# Deploy using PowerShell (Windows)
-npm run deploy:windows
-
-# Simple Windows deployment helper
-npm run deploy:windows:simple
+# SSH into Render or run locally with production DB URL
+python setup_db.py
 ```
 
-### Verification
+## Step 3: Frontend Deployment (Vercel)
+
+### 3.1 Install Vercel CLI
+
 ```bash
-# Verify production deployment
-npm run verify:deployment
-
-# Check environment variables
-npm run check-env
+npm install -g vercel
 ```
 
-## 🌐 Deployment Targets
+### 3.2 Deploy Frontend
 
-### Backend: Render
-- **Service Type**: Web Service
-- **Environment**: Node.js
-- **Build Command**: `npm install`
-- **Start Command**: `npm start`
-- **Port**: 10000 (configured via PORT env var)
-
-### Frontend: Netlify
-- **Build Directory**: `frontend`
-- **Build Command**: `npm run build`
-- **Publish Directory**: `frontend/build`
-- **Node Version**: 18
-
-## 🔧 Environment Variables
-
-### Backend (Render)
-```env
-NODE_ENV=production
-PORT=10000
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_supabase_anon_key
-OPENAI_API_KEY=sk-proj-your_openai_key
-COHERE_API_KEY=your_cohere_key
-CORS_ORIGIN=https://your-netlify-app.netlify.app
-API_KEY=your_secure_random_key
-RATE_LIMIT_GENERAL=100
-RATE_LIMIT_PROCESSING=10
-```
-
-### Frontend (Netlify)
-```env
-REACT_APP_API_BASE=https://your-backend.onrender.com/api
-REACT_APP_TITLE=RAG System
-REACT_APP_ENABLE_METRICS=true
-```
-
-## 🧪 Testing Your Deployment
-
-### Automated Testing
 ```bash
-# Run the verification script
-npm run verify:deployment
+cd frontend
+vercel
 ```
 
-### Manual Testing
-1. **Backend Health**: Visit `https://your-backend.onrender.com/health`
-2. **Frontend**: Visit `https://your-app.netlify.app`
-3. **Complete Pipeline**: Upload a document and ask a question
+Follow prompts:
+- Set up and deploy? **Y**
+- Which scope? Choose your account
+- Link to existing project? **N**
+- Project name? **mini-rag-frontend**
+- Directory? **./frontend**
+- Override settings? **N**
 
-### API Testing
+### 3.3 Set Environment Variable
+
 ```bash
-# Test document processing
-curl -X POST https://your-backend.onrender.com/api/documents/process \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Test document", "metadata": {"title": "Test"}}'
-
-# Test complete RAG pipeline
-curl -X POST https://your-backend.onrender.com/api/answers/complete-rag \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is this about?", "topK": 10}'
+vercel env add VITE_API_URL
 ```
 
-## 🔒 Security Checklist
+Enter your Render backend URL: `https://mini-rag-backend.onrender.com`
 
-- [ ] API keys stored as environment variables (not in code)
-- [ ] CORS configured with specific origins
-- [ ] Rate limiting enabled
-- [ ] HTTPS enabled on both services
-- [ ] Input validation active
-- [ ] Error messages don't expose sensitive information
+### 3.4 Deploy to Production
 
-## 📊 Monitoring & Maintenance
-
-### Health Monitoring
-- **Backend**: `https://your-backend.onrender.com/health`
-- **Render Dashboard**: Monitor logs, metrics, and deployments
-- **Netlify Dashboard**: Monitor builds and deployments
-
-### Log Access
-- **Render**: Dashboard → Your Service → Logs
-- **Netlify**: Dashboard → Site → Functions (if using) or Deploy logs
-
-### Performance Monitoring
-- Monitor API response times
-- Track error rates
-- Monitor resource usage
-- Set up alerts for service downtime
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-#### Backend Won't Start
 ```bash
-# Check logs in Render dashboard
-# Common causes:
-# - Missing environment variables
-# - Invalid API keys
-# - Database connection issues
+vercel --prod
 ```
 
-#### Frontend Build Fails
+Your app is now live! 🎉
+
+## Step 4: Verify Deployment
+
+### 4.1 Test Backend
+
 ```bash
-# Check build logs in Netlify
-# Common causes:
-# - Node.js version mismatch
-# - Missing dependencies
-# - Environment variable issues
+curl https://mini-rag-backend.onrender.com/health
 ```
 
-#### CORS Errors
+Expected: `{"status":"healthy"}`
+
+### 4.2 Test Frontend
+
+Visit your Vercel URL and:
+1. Upload a test document
+2. Ask a question
+3. Verify answer with citations
+
+## Step 5: Post-Deployment
+
+### 5.1 Monitor Logs
+
+**Render:**
+- Go to your service → Logs tab
+- Monitor for errors
+
+**Vercel:**
+- Go to your project → Deployments
+- Click on deployment → View Function Logs
+
+### 5.2 Set Up Alerts (Optional)
+
+**Render:**
+- Enable email notifications for deployment failures
+
+**Supabase:**
+- Monitor database usage in dashboard
+- Set up alerts for connection limits
+
+### 5.3 Cost Optimization
+
+**Free Tier Limits:**
+- Render: 750 hours/month (enough for 1 service)
+- Vercel: 100GB bandwidth/month
+- Supabase: 500MB database, 2GB bandwidth
+- OpenAI: Pay per use (~$0.01-0.02 per query)
+- Cohere: 1000 free API calls/month
+
+**Tips:**
+- Use Render's auto-sleep for low traffic
+- Cache common queries (future enhancement)
+- Monitor API usage in OpenAI/Cohere dashboards
+
+## Troubleshooting
+
+### Backend won't start
+
+**Check:**
+1. Environment variables set correctly
+2. Python version (3.9+)
+3. Dependencies installed
+4. Database connection string valid
+
+**Fix:**
 ```bash
-# Update CORS_ORIGIN in Render environment variables
-# Must match your Netlify URL exactly
+# View logs in Render dashboard
+# Common issues:
+# - Missing env vars
+# - Database connection timeout
+# - Port binding (use $PORT)
 ```
 
-#### API Calls Fail
+### Frontend can't connect to backend
+
+**Check:**
+1. VITE_API_URL set correctly
+2. CORS enabled in backend
+3. Backend is running
+
+**Fix:**
 ```bash
-# Check REACT_APP_API_BASE in Netlify environment variables
-# Must match your Render backend URL
+# Verify env var
+vercel env ls
+
+# Update if needed
+vercel env rm VITE_API_URL
+vercel env add VITE_API_URL
+vercel --prod
 ```
 
-### Getting Help
-1. Check the deployment checklist
-2. Run the verification script
-3. Review service logs
-4. Check environment variables
-5. Test locally first
+### Database connection errors
 
-## 📚 Additional Resources
+**Check:**
+1. Supabase project is active
+2. Connection string includes password
+3. IP allowlist (Supabase allows all by default)
 
-- [Render Documentation](https://render.com/docs)
-- [Netlify Documentation](https://docs.netlify.com)
-- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)
-- [Cloud Deployment Guide](./CLOUD_DEPLOYMENT.md)
+**Fix:**
+- Regenerate database password in Supabase
+- Update SUPABASE_DB_URL in Render
+- Restart Render service
 
-## 🎯 Production Best Practices
+### Slow performance
 
-### Performance
-- Use CDN for static assets (Netlify provides this)
-- Enable gzip compression (enabled by default)
-- Monitor and optimize API response times
-- Consider caching strategies for frequent queries
+**Optimize:**
+1. Enable connection pooling
+2. Increase Render instance size
+3. Add database indexes
+4. Reduce chunk size or top-k
 
-### Security
-- Regularly rotate API keys
-- Monitor API usage and costs
-- Set up proper logging and alerting
-- Use environment-specific configurations
+## Updating Deployment
 
-### Reliability
-- Set up health check monitoring
-- Configure auto-scaling if needed
-- Plan for disaster recovery
-- Document your deployment process
+### Backend Updates
+
+```bash
+git add .
+git commit -m "Update backend"
+git push
+```
+
+Render auto-deploys on push.
+
+### Frontend Updates
+
+```bash
+cd frontend
+git add .
+git commit -m "Update frontend"
+git push
+vercel --prod
+```
+
+## Security Checklist
+
+- [ ] Environment variables not in code
+- [ ] API keys rotated regularly
+- [ ] HTTPS enabled (automatic on Render/Vercel)
+- [ ] Database password strong
+- [ ] CORS configured properly
+- [ ] Rate limiting (future enhancement)
+- [ ] Input validation enabled
+- [ ] Error messages don't leak secrets
+
+## Scaling Considerations
+
+**When to scale:**
+- Response time > 5 seconds
+- Database connections maxed
+- API rate limits hit
+- Memory/CPU usage high
+
+**How to scale:**
+1. Upgrade Render plan (more CPU/RAM)
+2. Upgrade Supabase plan (more connections)
+3. Add Redis caching layer
+4. Implement request queuing
+5. Use batch processing for uploads
+
+## Backup Strategy
+
+**Database:**
+```bash
+# Supabase auto-backups (paid plans)
+# Or manual backup:
+pg_dump $SUPABASE_DB_URL > backup.sql
+```
+
+**Code:**
+- Git repository is your backup
+- Tag releases: `git tag v1.0.0`
+
+## Monitoring
+
+**Key Metrics:**
+- Request latency (target: < 3s)
+- Error rate (target: < 1%)
+- Database query time
+- API costs
+- Token usage
+
+**Tools:**
+- Render metrics dashboard
+- Vercel analytics
+- Supabase dashboard
+- OpenAI usage page
+- Cohere dashboard
 
 ---
 
-🎉 **Your RAG system is now ready for production!** Follow this guide and use the provided scripts for a smooth deployment experience.
+Need help? Check logs first, then review this guide. Most issues are environment variables or connection strings.

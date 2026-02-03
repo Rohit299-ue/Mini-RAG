@@ -78,10 +78,10 @@ COHERE_API_KEY=your_cohere_key
 SUPABASE_DB_URL=postgresql://user:pass@host:port/db
 ```
 
-5. Run database migrations:
-```bash
-python setup_db.py
-```
+5. Run database setup in Supabase SQL Editor:
+   - Copy contents of `backend/schema.sql`
+   - Paste into Supabase SQL Editor
+   - Click "Run"
 
 6. Start the server:
 ```bash

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS documents (
     source TEXT,
     title TEXT,
     section TEXT,
-    position INT,
+    chunk_position INT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -46,7 +46,7 @@ RETURNS TABLE (
     source TEXT,
     title TEXT,
     section TEXT,
-    position INT,
+    chunk_position INT,
     similarity FLOAT
 )
 LANGUAGE plpgsql
@@ -59,7 +59,7 @@ BEGIN
         d.source,
         d.title,
         d.section,
-        d.position,
+        d.chunk_position,
         1 - (d.embedding <=> query_embedding) as similarity
     FROM documents d
     ORDER BY d.embedding <=> query_embedding
@@ -102,7 +102,7 @@ RETURNS TABLE (
     id UUID,
     content TEXT,
     source TEXT,
-    position INT,
+    chunk_position INT,
     similarity FLOAT
 )
 LANGUAGE plpgsql
@@ -113,7 +113,7 @@ BEGIN
         d.id,
         d.content,
         d.source,
-        d.position,
+        d.chunk_position,
         1 - (d.embedding <=> query_embedding) as similarity
     FROM documents d
     WHERE d.title = search_title

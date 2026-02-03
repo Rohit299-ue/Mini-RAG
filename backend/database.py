@@ -29,7 +29,7 @@ class Database:
             cur = conn.cursor()
             
             query = """
-                INSERT INTO documents (content, embedding, source, title, section, position)
+                INSERT INTO documents (content, embedding, source, title, section, chunk_position)
                 VALUES %s
                 RETURNING id
             """
@@ -76,7 +76,7 @@ class Database:
                     source,
                     title,
                     section,
-                    position,
+                    chunk_position,
                     1 - (embedding <=> %s::vector) as similarity
                 FROM documents
                 ORDER BY embedding <=> %s::vector

@@ -39,7 +39,7 @@ RETURNS TABLE (
     similarity FLOAT
 )
 LANGUAGE plpgsql
-AS $$
+AS $$$
 BEGIN
     RETURN QUERY
     SELECT 
